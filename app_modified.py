@@ -18,37 +18,36 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Main Background & Text Color */
+    /* Clean Light Background */
     .stApp {
-        background-color: #111827; /* Dark Slate Blue */
-        color: #F3F4F6;            /* Light Off-White Text */
+        background-color: #F8FAFC; 
+        color: #1E293B;
     }
-    
-    /* Sidebar Styling */
+    /* Soft Blue-Gray Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #1F2937; /* Medium Gray-Blue */
+        background-color: #E2E8F0;
     }
-    
-    /* Input Box/Selectbox labels font styling */
+    /* Crisp dark gray text for labels */
     label {
-        color: #9CA3AF !important; /* Soft Gray for input labels */
+        color: #334155 !important;
+        font-weight: 600;
     }
-    
-    /* Custom Card Design for Outputs */
-    .prediction-box-safe {
-        background-color: #065F46; /* Deep Emerald Green */
+    /* Soft Red alert for High Risk */
+    .prediction-box-high {
+        background-color: #FEE2E2;
+        border: 2px solid #EF4444;
         padding: 20px;
         border-radius: 10px;
-        color: white;
-        font-weight: bold;
+        color: #991B1B;
         text-align: center;
     }
-    .prediction-box-high {
-        background-color: #991B1B; /* Deep Crimson Red */
+    /* Soft Green alert for Low Risk */
+    .prediction-box-safe {
+        background-color: #DCFCE7;
+        border: 2px solid #22C55E;
         padding: 20px;
         border-radius: 10px;
-        color: white;
-        font-weight: bold;
+        color: #166534;
         text-align: center;
     }
     </style>
