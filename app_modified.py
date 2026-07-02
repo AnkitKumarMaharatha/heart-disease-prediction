@@ -166,7 +166,7 @@ with tab3:
         margin=dict(l=20, r=20, t=40, b=20)
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     # 2. Status Output Layout
     metric_col1, metric_col2 = st.columns(2)
