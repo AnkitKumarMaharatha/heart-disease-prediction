@@ -15,26 +15,46 @@ st.set_page_config(
 # Custom CSS forcing a light gray background color
 # Custom CSS forcing a light gray background color
 # Custom CSS forcing a light gray background color safely across all viewport caches
-st.markdown("""
+st.markdown(
+    """
     <style>
-    /* 1. Force the absolute container wrapper background */
-    [data-testid="stAppViewContainer"], 
-    [data-testid="stAppViewMain"],
+    /* Main Background & Text Color */
     .stApp {
-        background-color: #f0f2f6 !important;
+        background-color: #111827; /* Dark Slate Blue */
+        color: #F3F4F6;            /* Light Off-White Text */
     }
     
-    /* 2. Strip background color from headers to prevent flashing */
-    [data-testid="stHeader"] {
-        background-color: rgba(0,0,0,0) !important;
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #1F2937; /* Medium Gray-Blue */
     }
     
-    /* 3. Clean fallback anchor for viewport frames */
-    [data-testid="stMainViewWithSidebar"] {
-        background-color: #f0f2f6 !important;
+    /* Input Box/Selectbox labels font styling */
+    label {
+        color: #9CA3AF !important; /* Soft Gray for input labels */
+    }
+    
+    /* Custom Card Design for Outputs */
+    .prediction-box-safe {
+        background-color: #065F46; /* Deep Emerald Green */
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+    }
+    .prediction-box-high {
+        background-color: #991B1B; /* Deep Crimson Red */
+        padding: 20px;
+        border-radius: 10px;
+        color: white;
+        font-weight: bold;
+        text-align: center;
     }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True
+)
 
 # 2. Load artifacts safely
 @st.cache_resource
