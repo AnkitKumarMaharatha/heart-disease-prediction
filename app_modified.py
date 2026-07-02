@@ -18,36 +18,40 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    /* Clean Light Background */
+    /* Jet Black Background */
     .stApp {
-        background-color: #F8FAFC; 
-        color: #1E293B;
+        background-color: #050505; 
+        color: #00F0FF; /* Neon Cyan Text */
     }
-    /* Soft Blue-Gray Sidebar */
+    /* Dark Cyber Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #E2E8F0;
+        background-color: #0D0D11;
+        border-right: 1px solid #FF0055;
     }
-    /* Crisp dark gray text for labels */
+    /* Neon Pink for input labels */
     label {
-        color: #334155 !important;
-        font-weight: 600;
+        color: #FF0055 !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    /* Soft Red alert for High Risk */
+    /* Electric Crimson for High Risk */
     .prediction-box-high {
-        background-color: #FEE2E2;
-        border: 2px solid #EF4444;
+        background-color: #1A0005;
+        border: 2px solid #FF003C;
+        box-shadow: 0 0 15px #FF003C;
         padding: 20px;
-        border-radius: 10px;
-        color: #991B1B;
+        border-radius: 8px;
+        color: #FFD4DC;
         text-align: center;
     }
-    /* Soft Green alert for Low Risk */
+    /* Matrix Green for Low Risk */
     .prediction-box-safe {
-        background-color: #DCFCE7;
-        border: 2px solid #22C55E;
+        background-color: #001A08;
+        border: 2px solid #00FF66;
+        box-shadow: 0 0 15px #00FF66;
         padding: 20px;
-        border-radius: 10px;
-        color: #166534;
+        border-radius: 8px;
+        color: #D4FFE2;
         text-align: center;
     }
     </style>
