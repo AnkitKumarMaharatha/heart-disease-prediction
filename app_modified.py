@@ -1,196 +1,151 @@
 import streamlit as st
 import pandas as pd
 import joblib
-import numpy as np
-import plotly.graph_objects as go 
 
-# 1. Page & Styling Configuration
+# 1. Load your artifacts safely
+model = joblib.load("Log_Heart.pkl")
+scaler = joblib.load("scaler_heart.pkl")
+columns = joblib.load("columns_heart.pkl")
+
+# Configured to wide layout for an interactive dashboard experience
 st.set_page_config(
-    page_title="Heart Disease Risk Analyzer",
-    page_icon="🫀",
-    layout="wide" # Changed to wide to better accommodate sidebar + main tabs layout
+    page_title="Heart Disease Prediction",
+    page_icon="❤️",
+    layout="wide"
 )
 
-# FIXED CYBERPUNK CSS: Cleans up layouts without breaking tab visibility
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: #050505; 
-        color: #00F0FF; 
-    }
-    [data-testid="stSidebar"] {
-        background-color: #0D0D11;
-        border-right: 1px solid #FF0055;
-    }
-    
-    /* Target widget labels cleanly */
-    .stSlider label, .stSelectbox label, .stRadio label {
-        color: #FF0055 !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-weight: bold;
-    }
-    
-    /* Clean metric styling */
-    div[data-testid="stMetricValue"] {
-        font-size: 2rem !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# 2. Load artifacts safely
-@st.cache_resource
-def load_assets():
-    try:
-        model = joblib.load("Log_Heart.pkl")
-        columns = joblib.load("columns_heart.pkl")
-        scaler = joblib.load("scaler_heart.pkl")
-        return model, columns, scaler
-    except Exception as e:
-        st.error(f"Error loading model files: {e}")
-        st.stop()
-
-model, columns, scaler = load_assets()
-
-# ==========================================
-# 3. SIDEBAR: ALL PATIENT INPUTS
-# ==========================================
-st.sidebar.title("👤 Patient Profile & Vitals")
-st.sidebar.write("Adjust clinical parameters below to recalculate risk metrics live.")
-
-st.sidebar.subheader("Demographics & Symptoms")
-age = st.sidebar.slider("Age (Years)", min_value=1, max_value=110, value=45)
-sex = st.sidebar.radio("Gender", options=["Male", "Female"], horizontal=True)
-
-cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-chest_pain = st.sidebar.selectbox("Chest Pain Type", options=cp_options)
-exang = st.sidebar.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True)
-
-st.sidebar.markdown("---")
-st.sidebar.subheader("Cardiovascular Test Results")
-trestbps = st.sidebar.slider("Resting Blood Pressure (mm Hg)", min_value=80, max_value=220, value=120)
-if trestbps >= 140:
-    st.sidebar.warning("⚠️ Hypertension Threshold (>140 mm Hg)")
-    
-chol = st.sidebar.slider("Serum Cholesterol (mg/dl)", min_value=0, max_value=600, value=200)
-if chol > 240:
-    st.sidebar.warning("⚠️ Hypercholesterolemia Threshold (>240 mg/dl)")
-    
-fbs = st.sidebar.selectbox("Fasting Blood Sugar > 120 mg/dl", options=["False", "True"])
-thalach = st.sidebar.slider("Maximum Heart Rate Achieved (MaxHR)", min_value=60, max_value=220, value=150)
-oldpeak = st.sidebar.slider("ST Depression (Oldpeak)", min_value=-3.0, max_value=10.0, value=0.0, step=0.1)
-
-st_slope = st.sidebar.selectbox("ST Slope Type", options=["Up", "Flat", "Down"])
-restecg = st.sidebar.selectbox("Resting ECG Results", options=["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"])
-
-
-# ==========================================
-# 4. DATA PROCESSING & INFERENCE (Runs cleanly before main UI rendering)
-# ==========================================
-gender_encoded = 1 if sex == "Female" else 0 
-fbs_encoded = 1 if fbs == "True" else 0
-exang_encoded = 1 if exang == "Yes" else 0
-
-asy = 1 if chest_pain == "Asymptomatic" else 0
-ata = 1 if chest_pain == "Atypical Angina" else 0
-nap = 1 if chest_pain == "Non-anginal Pain" else 0
-ta = 1 if chest_pain == "Typical Angina" else 0
-
-lvh = 1 if restecg == "Left Ventricular Hypertrophy" else 0
-normal = 1 if restecg == "Normal" else 0
-St = 1 if restecg == "ST-T Wave Abnormality" else 0
-
-down = 1 if st_slope == "Down" else 0
-flat = 1 if st_slope == "Flat" else 0
-up = 1 if st_slope == "Up" else 0
-
-ordered_features = [
-    age, gender_encoded, trestbps, chol, fbs_encoded, thalach, exang_encoded, oldpeak,
-    asy, ata, nap, ta, lvh, normal, St, down, flat, up
-]
-
-input_data = pd.DataFrame([ordered_features], columns=columns)
-scaled = scaler.transform(input_data)
-
-prediction = model.predict(scaled)
-prediction_proba = model.predict_proba(scaled)[0][1]
-
-
-# ==========================================
-# 5. MAIN PAGE DISPLAY
-# ==========================================
-st.title("🫀 CardioRisk: Intelligent Diagnostic Assistant")
-st.write("The diagnostic engine dynamically processes patient cardiovascular profiles instantly based on sidebar parameters.")
+st.title("❤️ Heart Disease Diagnostic Assistant")
+st.write("An interactive clinical decision-support panel driven by predictive machine learning algorithms.")
 st.markdown("---")
 
-# Tab navigation handles outputs only now
-tab1, tab2, tab3 = st.tabs(["📊 Diagnostic Risk Assessment", "📋 Clinical Summary", "🛠️ Technical Feature Matrix"])
-
-with tab1:
-    st.subheader("Dynamic Risk Analytics")
-    
-    fig = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = prediction_proba * 100,
-        domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': "Heart Disease Risk Probability (%)", 'font': {'color': '#00F0FF', 'size': 18}},
-        gauge = {
-            'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "#00F0FF"},
-            'bar': {'color': "#FF0055" if prediction[0] == 1 else "#00FF66"},
-            'bgcolor': "#111111",
-            'borderwidth': 2,
-            'bordercolor': "#333",
-            'steps': [
-                {'range': [0, 40], 'color': 'rgba(0, 255, 102, 0.1)'},
-                {'range': [40, 70], 'color': 'rgba(255, 200, 0, 0.1)'},
-                {'range': [70, 100], 'color': 'rgba(255, 0, 85, 0.1)'}
-            ],
-        }
-    ))
-    
-    fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font={'color': "#00F0FF", 'family': "Arial"},
-        height=300,
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-
-    metric_col1, metric_col2 = st.columns(2)
-    with metric_col1:
-        if prediction[0] == 1:
-            st.metric(label="Calculated Classification", value="HIGH RISK", delta="Action Advised", delta_color="inverse")
-        else:
-            st.metric(label="Calculated Classification", value="LOW RISK", delta="Normal Profile", delta_color="normal")
-
-    with metric_col2:
-        st.markdown("**Core Findings Summary:**")
-        if prediction[0] == 1:
-            st.write(f"Patient falls into a statistically higher vulnerability category. The model flags a `{prediction_proba:.1%}` match with legacy ischemic profiles.")
-        else:
-            st.write(f"The baseline attributes showcase healthy tracking thresholds. Risk margin stays securely low at `{prediction_proba:.1%}`.")
+# Setup application routing using interactive tabs
+tab1, tab2 = st.tabs(["📊 Diagnostic Dashboard", "ℹ️ Documentation & Guidelines"])
 
 with tab2:
-    st.subheader("Auto-Generated Clinical Summary")
-    summary_text = f"""
-    **Patient Medical Profile Summary**
-    * **Age/Gender:** {age} Year Old {sex}
-    * **Symptom Type:** Presenting with {chest_pain} chest discomfort.
-    * **Vitals Tracking:** Blood pressure registered at {trestbps} mm Hg with a serum lipid panel holding at {chol} mg/dl.
-    * **Diagnostic Vector Result:** Model evaluates standard classification status at **{"HIGH RISK" if prediction[0]==1 else "LOW RISK"}**.
-    """
-    st.info(summary_text)
+    st.markdown("""
+    ### Interactive Tool Guidelines
+    1. Fill in patient information inside the **Demographics & Symptoms** block.
+    2. Provide physical measurements and clinical lab readings inside the **Physiological Metrics** block.
+    3. Click **Run Diagnostic Prediction** to pass the data pipeline into the standardized machine learning engine.
+    
+    *Note: Feature mapping configurations, feature scaling arrays, and tracking structures match your training datasets exactly.*
+    """)
 
-with tab3:
-    st.subheader("Raw Model Feature Matrix")
-    st.write("This is the exact synchronized 1x18 matrix passed to the Logistic Regression model:")
-    st.dataframe(input_data)
+with tab1:
+    st.subheader("📋 Patient Information Intake")
+    
+    # Organized columns with a generous gap layout
+    col1, col2 = st.columns(2, gap="large")
 
-# Global App Footer
+    with col1:
+        st.markdown("#### 🧑 Demographics & Symptoms")
+        age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45)
+        sex = st.selectbox("Gender", options=["Male", "Female"])
+        
+        cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
+        chest_pain = st.selectbox("Chest Pain Type", options=cp_options, 
+                                  help="Typical: classic radiating chest pain. Atypical: non-classical pain. Non-anginal: spasm/sharp pains. Asymptomatic: silent indicators.")
+        
+        exang = st.selectbox("Exercise Induced Angina", options=["No", "Yes"],
+                             help="Does rigorous activity trigger chest/anginal pain pathways?")
+
+    with col2:
+        st.markdown("#### 🩺 Physiological & Lab Metrics")
+        trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120)
+        chol = st.number_input("Serum Cholesterol (mg/dl)", min_value=0, max_value=650, value=200)
+        thalach = st.number_input("Maximum Heart Rate Achieved (bpm)", min_value=60, max_value=220, value=150)
+        fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dl", options=["False", "True"])
+        
+        restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
+        restecg = st.selectbox("Resting ECG Results", options=restecg_options)
+        
+        oldpeak = st.number_input("ST Depression Induced by Exercise", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
+        st_slope_options = ["Up", "Flat", "Down"]
+        st_slope = st.selectbox("ST Slope", options=st_slope_options, help="Slope behavior recorded at peak exercise exertion.")
+
+    st.markdown("---")
+
+    # Feature Mapping & Encoding Logics
+    # Realignment: Setting Male to 1, Female to 0 to align safely with your comment
+    gender_encoded = 1 if sex == "Male" else 0
+    fbs_encoded = 1 if fbs == "True" else 0
+    exang_encoded = 1 if exang == "Yes" else 0
+
+    # ChestPainType One-Hot Mapping
+    asy = 1 if chest_pain == "Asymptomatic" else 0
+    ata = 1 if chest_pain == "Atypical Angina" else 0
+    nap = 1 if chest_pain == "Non-anginal Pain" else 0
+    ta = 1 if chest_pain == "Typical Angina" else 0
+
+    # RestingECG One-Hot Mapping
+    lvh = 1 if restecg == "Left Ventricular Hypertrophy" else 0
+    normal = 1 if restecg == "Normal" else 0
+    St = 1 if restecg == "ST-T Wave Abnormality" else 0
+
+    # ST_Slope One-Hot Mapping
+    down = 1 if st_slope == "Down" else 0
+    up = 1 if st_slope == "Up" else 0
+    flat = 1 if st_slope == "Flat" else 0
+
+    # 2. Reconstruct DataFrame matching exact training list
+    data_dict = {
+        'Age': age, 
+        'Gender': gender_encoded, 
+        'RestingBP': trestbps, 
+        'Cholesterol': chol, 
+        'FastingBS': fbs_encoded, 
+        'MaxHR': thalach, 
+        'ExerciseAngina': exang_encoded, 
+        'Oldpeak': oldpeak, 
+        'ChestPainType_ASY': asy, 
+        'ChestPainType_ATA': ata, 
+        'ChestPainType_NAP': nap, 
+        'ChestPainType_TA': ta, 
+        'RestingECG_LVH': lvh, 
+        'RestingECG_Normal': normal, 
+        'RestingECG_ST': St, 
+        'ST_Slope_Down': down, 
+        'ST_Slope_Flat': flat, 
+        'ST_Slope_Up': up
+    }
+
+    input_data = pd.DataFrame([data_dict])
+
+    # Dynamic column ordering verification
+    input_data = input_data[columns]
+
+    # Action layout configurations
+    btn_col, _ = st.columns([1, 2])
+    with btn_col:
+        run_prediction = st.button("🔮 Run Diagnostic Prediction", type="primary", use_container_width=True)
+
+    if run_prediction:
+        # Pipeline transformations
+        scaled_features = scaler.transform(input_data)
+        prediction = model.predict(scaled_features)
+        prediction_proba = model.predict_proba(scaled_features)[0][1]
+        
+        st.markdown("### 🎯 Diagnostic Report Summary")
+        
+        # Interactive response metrics framework
+        res_col1, res_col2 = st.columns([1, 2], gap="large")
+        
+        with res_col1:
+            if prediction[0] == 1:
+                st.metric(label="Calculated Risk Category", value="HIGH RISK", delta="Positive Screen", delta_color="inverse")
+            else:
+                st.metric(label="Calculated Risk Category", value="LOW RISK", delta="Negative Screen", delta_color="normal")
+                
+        with res_col2:
+            st.write("**Model Risk Probability Tracking Meter:**")
+            st.progress(float(prediction_proba))
+            st.write(f"Calculated Probability Value: **{prediction_proba:.2%}**")
+
+        # Visual messaging breakouts
+        if prediction[0] == 1:
+            st.error(f"⚠️ **Clinical Notice:** The underlying algorithm flagged a significant heart disease risk calculation profile (**{prediction_proba:.2%}** probability). Comprehensive imaging or clinical follow-up is advisable.")
+        else:
+            st.success(f"✅ **Clinical Notice:** The underlying algorithm determined a low overall risk profile (**{1 - prediction_proba:.2%}** confidence score). No clinical anomalies detected based on active tracking variables.")
+
 st.markdown("---")
-st.caption("**Disclaimer:** This application serves purely as an educational/portfolio demonstration of a machine learning classifier. It does not replace clinical consultation.")
+st.caption("**Disclaimer:** This software tool is engineered for informational, educational, and computational demonstration purposes. It does not construct medical diagnoses, treatment paths, or replace qualified healthcare provider screenings.")
