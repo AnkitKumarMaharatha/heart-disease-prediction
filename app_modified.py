@@ -13,44 +13,37 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS for Deep Background Injecting
+# FORCE-INJECT CSS: This overrides Streamlit's internal block containers directly
 st.markdown("""
     <style>
-    /* Styling for Input Container Blocks */
-    .input-card {
-        background-color: #f0f4f8;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        margin-bottom: 20px;
-        border-left: 5px solid #2b6cb0;
+    /* 1. Target the FIRST input container block (Demographics) */
+    div[data-testid="stVerticalBlock"] > div:nth-child(2) > div[data-testid="stVerticalBlockBorder"] {
+        background-color: #EBF8FF !important; /* Soft Blue */
+        border: 2px solid #3182CE !important;
+        border-radius: 16px !important;
+        padding: 30px !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
     }
     
-    /* High Risk Red Background Block */
-    .risk-card {
-        background-color: #fff5f5;
-        padding: 24px;
-        border-radius: 12px;
-        border: 1px solid #feb2b2;
-        border-left: 6px solid #e53e3e;
-        margin-bottom: 20px;
+    /* 2. Target the SECOND input container block (Labs) */
+    div[data-testid="stVerticalBlock"] > div:nth-child(3) > div[data-testid="stVerticalBlockBorder"] {
+        background-color: #F7FAFC !important; /* Cool Grey */
+        border: 2px solid #CBD5E0 !important;
+        border-radius: 16px !important;
+        padding: 30px !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
     }
-    
-    /* Low Risk/Safe Green Background Block */
-    .safe-card {
-        background-color: #f0fff4;
-        padding: 24px;
-        border-radius: 12px;
-        border: 1px solid #9ae6b4;
-        border-left: 6px solid #38a169;
-        margin-bottom: 20px;
-    }
-    
-    /* Make text readable inside colored blocks if using dark mode */
+
+    /* Dark Mode specific overrides so text stays crisp and readable */
     @media (prefers-color-scheme: dark) {
-        .input-card { background-color: #1e293b; border-left-color: #60a5fa; }
-        .risk-card { background-color: #451a1a; border-color: #991b1b; border-left-color: #f87171; }
-        .safe-card { background-color: #14532d; border-color: #166534; border-left-color: #4ade80; }
+        div[data-testid="stVerticalBlock"] > div:nth-child(2) > div[data-testid="stVerticalBlockBorder"] {
+            background-color: #1A365D !important; /* Dark Navy Blue */
+            border-color: #2B6CB0 !important;
+        }
+        div[data-testid="stVerticalBlock"] > div:nth-child(3) > div[data-testid="stVerticalBlockBorder"] {
+            background-color: #2D3748 !important; /* Dark Slate Grey */
+            border-color: #4A5568 !important;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -62,39 +55,37 @@ st.markdown("---")
 tab1, tab2 = st.tabs(["📋 [Step 1] Patient Metric Input", "🎯 [Step 2] Real-Time Prediction Analytics"])
 
 with tab1:
-    # Injecting the Background Color block around Demographics
-    st.markdown('<div class="input-card">', unsafe_allow_html=True)
-    st.markdown("### 🧑‍⚕️ Patient Demographics & Symptom Profile")
-    col1, col2 = st.columns(2, gap="large")
-    with col1:
-        age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45)
-        sex = st.selectbox("Gender Identification", options=["Male", "Female"])
-        cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-        chest_pain = st.selectbox("Chest Pain Categorization", options=cp_options)
-        exang = st.selectbox("Exercise Induced Angina Symptoms", options=["No", "Yes"])
-    with col2:
-        trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120)
-        chol = st.number_input("Serum Cholesterol Level (mg/dl)", min_value=0, max_value=650, value=200)
-        thalach = st.number_input("Maximum Achieved Heart Rate (bpm)", min_value=60, max_value=220, value=150)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # First Styled Block: Demographics
+    with st.container(border=True):
+        st.markdown("### 🧑‍⚕️ Patient Demographics & Symptom Profile")
+        col1, col2 = st.columns(2, gap="large")
+        with col1:
+            age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45)
+            sex = st.selectbox("Gender Identification", options=["Male", "Female"])
+            cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
+            chest_pain = st.selectbox("Chest Pain Categorization", options=cp_options)
+            exang = st.selectbox("Exercise Induced Angina Symptoms", options=["No", "Yes"])
+        with col2:
+            trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120)
+            chol = st.number_input("Serum Cholesterol Level (mg/dl)", min_value=0, max_value=650, value=200)
+            thalach = st.number_input("Maximum Achieved Heart Rate (bpm)", min_value=60, max_value=220, value=150)
 
-    # Injecting the Background Color block around Labs
-    st.markdown('<div class="input-card">', unsafe_allow_html=True)
-    st.markdown("### 🔬 Advanced Electrocardiogram & Lab Metrics")
-    col3, col4 = st.columns(2, gap="large")
-    with col3:
-        fbs = st.selectbox("Fasting Blood Sugar Profile > 120 mg/dl", options=["False", "True"])
-        restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
-        restecg = st.selectbox("Resting ECG Waveform Analysis", options=restecg_options)
-    with col4:
-        oldpeak = st.number_input("ST Depression Induced via Physical Stress", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
-        st_slope_options = ["Up", "Flat", "Down"]
-        st_slope = st.selectbox("Peak Exercise ST Segment Slope", options=st_slope_options)
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Second Styled Block: Electrocardiogram
+    with st.container(border=True):
+        st.markdown("### 🔬 Advanced Electrocardiogram & Lab Metrics")
+        col3, col4 = st.columns(2, gap="large")
+        with col3:
+            fbs = st.selectbox("Fasting Blood Sugar Profile > 120 mg/dl", options=["False", "True"])
+            restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
+            restecg = st.selectbox("Resting ECG Waveform Analysis", options=restecg_options)
+        with col4:
+            oldpeak = st.number_input("ST Depression Induced via Physical Stress", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
+            st_slope_options = ["Up", "Flat", "Down"]
+            st_slope = st.selectbox("Peak Exercise ST Segment Slope", options=st_slope_options)
 
     st.info("💡 **Data Live Synced:** Head over to the **Real-Time Prediction Analytics** tab to view results instantly.")
 
-# Behind-the-scenes engineering pipeline calculations
+# Behind-the-scenes data engineering pipeline
 gender_encoded = 1 if sex == "Male" else 0
 fbs_encoded = 1 if fbs == "True" else 0
 exang_encoded = 1 if exang == "Yes" else 0
@@ -122,7 +113,7 @@ data_dict = {
 
 input_data = pd.DataFrame([data_dict])[columns]
 
-# Model Transformations
+# Machine Learning Calculations
 scaled_features = scaler.transform(input_data)
 prediction = model.predict(scaled_features)
 prediction_proba = float(model.predict_proba(scaled_features)[0][1])
@@ -130,32 +121,24 @@ prediction_proba = float(model.predict_proba(scaled_features)[0][1])
 with tab2:
     st.subheader("🎯 Live Clinical Diagnostic Report")
     
-    # Dynamic styling depending on model prediction mapping
+    # Real-Time colored status blocks using native Streamlit notification alerts (which are completely filled)
     if prediction[0] == 1:
-        st.markdown('<div class="risk-card">', unsafe_allow_html=True)
-        st.markdown("### ⚠️ Alert: High Probability of Anomalies Detected")
-        
+        st.error(f"## ⚠️ Alert: High Probability of Anomalies Detected ({prediction_proba:.2%})")
         c1, c2 = st.columns([1, 2])
         with c1:
             st.metric(label="Evaluated Risk Index", value="HIGH RISK", delta="Positive Finding", delta_color="inverse")
         with c2:
             st.write("**Active Probability Risk Threshold Status:**")
             st.progress(prediction_proba)
-            st.write(f"The structural pipeline models an active probability score of **{prediction_proba:.2%}**.")
-        st.markdown('</div>', unsafe_allow_html=True)
             
     else:
-        st.markdown('<div class="safe-card">', unsafe_allow_html=True)
-        st.markdown("### ✅ Clear Status: Standard Metrics Registered")
-        
+        st.success(f"## ✅ Clear Status: Standard Metrics Registered ({1 - prediction_proba:.2%})")
         c1, c2 = st.columns([1, 2])
         with c1:
             st.metric(label="Evaluated Risk Index", value="LOW RISK", delta="Negative Finding", delta_color="normal")
         with c2:
             st.write("**Active Probability Risk Threshold Status:**")
             st.progress(prediction_proba)
-            st.write(f"The structural pipeline models an active probability score of **{prediction_proba:.2%}**.")
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with st.expander("🔍 View Raw Transformed Vector Metrics", expanded=False):
         st.dataframe(input_data, use_container_width=True)
