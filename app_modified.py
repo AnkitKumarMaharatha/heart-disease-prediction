@@ -13,51 +13,88 @@ st.set_page_config(
     layout="wide"
 )
 
-# Application Header
+# Custom CSS for Deep Background Injecting
+st.markdown("""
+    <style>
+    /* Styling for Input Container Blocks */
+    .input-card {
+        background-color: #f0f4f8;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        margin-bottom: 20px;
+        border-left: 5px solid #2b6cb0;
+    }
+    
+    /* High Risk Red Background Block */
+    .risk-card {
+        background-color: #fff5f5;
+        padding: 24px;
+        border-radius: 12px;
+        border: 1px solid #feb2b2;
+        border-left: 6px solid #e53e3e;
+        margin-bottom: 20px;
+    }
+    
+    /* Low Risk/Safe Green Background Block */
+    .safe-card {
+        background-color: #f0fff4;
+        padding: 24px;
+        border-radius: 12px;
+        border: 1px solid #9ae6b4;
+        border-left: 6px solid #38a169;
+        margin-bottom: 20px;
+    }
+    
+    /* Make text readable inside colored blocks if using dark mode */
+    @media (prefers-color-scheme: dark) {
+        .input-card { background-color: #1e293b; border-left-color: #60a5fa; }
+        .risk-card { background-color: #451a1a; border-color: #991b1b; border-left-color: #f87171; }
+        .safe-card { background-color: #14532d; border-color: #166534; border-left-color: #4ade80; }
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("❤️ Advanced Heart Disease Analytics Engine")
 st.write("Modify patient inputs in Tab 1 and switch to Tab 2 for real-time tracking.")
 st.markdown("---")
 
-# Setup layout tabs
 tab1, tab2 = st.tabs(["📋 [Step 1] Patient Metric Input", "🎯 [Step 2] Real-Time Prediction Analytics"])
 
 with tab1:
-    # Use a colored block container for structural separation
-    with st.container(border=True):
-        st.markdown("### 🧑‍⚕️ Patient Demographics & Symptom Profile")
-        col1, col2 = st.columns(2, gap="large")
+    # Injecting the Background Color block around Demographics
+    st.markdown('<div class="input-card">', unsafe_allow_html=True)
+    st.markdown("### 🧑‍⚕️ Patient Demographics & Symptom Profile")
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45)
+        sex = st.selectbox("Gender Identification", options=["Male", "Female"])
+        cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
+        chest_pain = st.selectbox("Chest Pain Categorization", options=cp_options)
+        exang = st.selectbox("Exercise Induced Angina Symptoms", options=["No", "Yes"])
+    with col2:
+        trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120)
+        chol = st.number_input("Serum Cholesterol Level (mg/dl)", min_value=0, max_value=650, value=200)
+        thalach = st.number_input("Maximum Achieved Heart Rate (bpm)", min_value=60, max_value=220, value=150)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        with col1:
-            age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45)
-            sex = st.selectbox("Gender Identification", options=["Male", "Female"])
-            
-            cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-            chest_pain = st.selectbox("Chest Pain Categorization", options=cp_options)
-            
-            exang = st.selectbox("Exercise Induced Angina Symptoms", options=["No", "Yes"])
+    # Injecting the Background Color block around Labs
+    st.markdown('<div class="input-card">', unsafe_allow_html=True)
+    st.markdown("### 🔬 Advanced Electrocardiogram & Lab Metrics")
+    col3, col4 = st.columns(2, gap="large")
+    with col3:
+        fbs = st.selectbox("Fasting Blood Sugar Profile > 120 mg/dl", options=["False", "True"])
+        restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
+        restecg = st.selectbox("Resting ECG Waveform Analysis", options=restecg_options)
+    with col4:
+        oldpeak = st.number_input("ST Depression Induced via Physical Stress", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
+        st_slope_options = ["Up", "Flat", "Down"]
+        st_slope = st.selectbox("Peak Exercise ST Segment Slope", options=st_slope_options)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        with col2:
-            trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120)
-            chol = st.number_input("Serum Cholesterol Level (mg/dl)", min_value=0, max_value=650, value=200)
-            thalach = st.number_input("Maximum Achieved Heart Rate (bpm)", min_value=60, max_value=220, value=150)
+    st.info("💡 **Data Live Synced:** Head over to the **Real-Time Prediction Analytics** tab to view results instantly.")
 
-    with st.container(border=True):
-        st.markdown("### 🔬 Advanced Electrocardiogram & Lab Metrics")
-        col3, col4 = st.columns(2, gap="large")
-
-        with col3:
-            fbs = st.selectbox("Fasting Blood Sugar Profile > 120 mg/dl", options=["False", "True"])
-            restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
-            restecg = st.selectbox("Resting ECG Waveform Analysis", options=restecg_options)
-
-        with col4:
-            oldpeak = st.number_input("ST Depression Induced via Physical Stress", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
-            st_slope_options = ["Up", "Flat", "Down"]
-            st_slope = st.selectbox("Peak Exercise ST Segment Slope", options=st_slope_options)
-
-    st.success("💡 **Data Synced:** Your metrics have been mapped. Please navigate to the second tab to view predictions.")
-
-# Pipeline Mapping Matrix (Executes dynamically behind the scenes)
+# Behind-the-scenes engineering pipeline calculations
 gender_encoded = 1 if sex == "Male" else 0
 fbs_encoded = 1 if fbs == "True" else 0
 exang_encoded = 1 if exang == "Yes" else 0
@@ -85,7 +122,7 @@ data_dict = {
 
 input_data = pd.DataFrame([data_dict])[columns]
 
-# Real-time modeling calculation
+# Model Transformations
 scaled_features = scaler.transform(input_data)
 prediction = model.predict(scaled_features)
 prediction_proba = float(model.predict_proba(scaled_features)[0][1])
@@ -93,15 +130,10 @@ prediction_proba = float(model.predict_proba(scaled_features)[0][1])
 with tab2:
     st.subheader("🎯 Live Clinical Diagnostic Report")
     
-    # Live Pipeline Execution Meter
-    with st.status("Processing structural array tracking vectors...", expanded=False) as status:
-        st.write("Applying standard scalar transforms across operational input rows...")
-        st.write("Evaluating neural prediction matrices against targeted weights...")
-        status.update(label="Diagnostic Pipeline Compiled Successfully!", state="complete", expanded=False)
-
-    # Use structural color panels based on risk level
+    # Dynamic styling depending on model prediction mapping
     if prediction[0] == 1:
-        st.error(f"### ⚠️ Alert: High Probability of Anomalies Detected")
+        st.markdown('<div class="risk-card">', unsafe_allow_html=True)
+        st.markdown("### ⚠️ Alert: High Probability of Anomalies Detected")
         
         c1, c2 = st.columns([1, 2])
         with c1:
@@ -110,9 +142,11 @@ with tab2:
             st.write("**Active Probability Risk Threshold Status:**")
             st.progress(prediction_proba)
             st.write(f"The structural pipeline models an active probability score of **{prediction_proba:.2%}**.")
+        st.markdown('</div>', unsafe_allow_html=True)
             
     else:
-        st.success(f"### ✅ Clear Status: Standard Metrics Registered")
+        st.markdown('<div class="safe-card">', unsafe_allow_html=True)
+        st.markdown("### ✅ Clear Status: Standard Metrics Registered")
         
         c1, c2 = st.columns([1, 2])
         with c1:
@@ -121,10 +155,10 @@ with tab2:
             st.write("**Active Probability Risk Threshold Status:**")
             st.progress(prediction_proba)
             st.write(f"The structural pipeline models an active probability score of **{prediction_proba:.2%}**.")
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Contextual Parameter Deep Dive UI block
     with st.expander("🔍 View Raw Transformed Vector Metrics", expanded=False):
         st.dataframe(input_data, use_container_width=True)
 
 st.markdown("---")
-st.caption("**Disclaimer:** This software tool is engineered for informational, educational, and computational demonstration purposes. It does not construct medical diagnoses, treatment paths, or replace qualified healthcare provider screenings.")
+st.caption("**Disclaimer:** This software tool is engineered for informational, educational, and computational demonstration purposes.")
