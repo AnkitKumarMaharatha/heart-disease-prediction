@@ -8,10 +8,10 @@ import plotly.graph_objects as go
 st.set_page_config(
     page_title="Heart Disease Risk Analyzer",
     page_icon="🫀",
-    layout="centered"
+    layout="wide" # Changed to wide to better accommodate sidebar + main tabs layout
 )
 
-# FIXED CYBERPUNK CSS: Safely styles labels without breaking Streamlit's native Tab engine
+# FIXED CYBERPUNK CSS: Cleans up layouts without breaking tab visibility
 st.markdown(
     """
     <style>
@@ -24,7 +24,7 @@ st.markdown(
         border-right: 1px solid #FF0055;
     }
     
-    /* Target widget labels specifically so we don't break the hidden tab headers */
+    /* Target widget labels cleanly */
     .stSlider label, .stSelectbox label, .stRadio label {
         color: #FF0055 !important;
         text-transform: uppercase;
@@ -55,57 +55,41 @@ def load_assets():
 
 model, columns, scaler = load_assets()
 
-# 3. UI Header
-st.title("🫀 CardioRisk: Intelligent Diagnostic Assistant")
-st.write("Modify patient demographics and vital clinical metrics below. The diagnostic engine dynamically visualizes patient cardiovascular profiles instantly.")
-st.markdown("---")
+# ==========================================
+# 3. SIDEBAR: ALL PATIENT INPUTS
+# ==========================================
+st.sidebar.title("👤 Patient Profile & Vitals")
+st.sidebar.write("Adjust clinical parameters below to recalculate risk metrics live.")
 
-# 4. Grouping Inputs into Interactive Tabs (Now safely contained)
-tab1, tab2, tab3 = st.tabs(["👤 Patient Profile", "📊 Vitals & Labs", "📈 Interactive Analysis"])
+st.sidebar.subheader("Demographics & Symptoms")
+age = st.sidebar.slider("Age (Years)", min_value=1, max_value=110, value=45)
+sex = st.sidebar.radio("Gender", options=["Male", "Female"], horizontal=True)
 
-with tab1:
-    st.subheader("Demographics & Symptoms")
-    col1_1, col1_2 = st.columns(2)
+cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
+chest_pain = st.sidebar.selectbox("Chest Pain Type", options=cp_options)
+exang = st.sidebar.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True)
+
+st.sidebar.markdown("---")
+st.sidebar.subheader("Cardiovascular Test Results")
+trestbps = st.sidebar.slider("Resting Blood Pressure (mm Hg)", min_value=80, max_value=220, value=120)
+if trestbps >= 140:
+    st.sidebar.warning("⚠️ Hypertension Threshold (>140 mm Hg)")
     
-    with col1_1:
-        age = st.slider("Age (Years)", min_value=1, max_value=110, value=45, help="Select the patient's age.")
-        sex = st.radio("Gender", options=["Male", "Female"], horizontal=True)
+chol = st.sidebar.slider("Serum Cholesterol (mg/dl)", min_value=0, max_value=600, value=200)
+if chol > 240:
+    st.sidebar.warning("⚠️ Hypercholesterolemia Threshold (>240 mg/dl)")
     
-    with col1_2:
-        cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-        chest_pain = st.selectbox("Chest Pain Type", options=cp_options, 
-                                help="Type of chest pain experienced by the patient.")
-        exang = st.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True,
-                           help="Does exercise trigger chest pain/angina symptoms?")
+fbs = st.sidebar.selectbox("Fasting Blood Sugar > 120 mg/dl", options=["False", "True"])
+thalach = st.sidebar.slider("Maximum Heart Rate Achieved (MaxHR)", min_value=60, max_value=220, value=150)
+oldpeak = st.sidebar.slider("ST Depression (Oldpeak)", min_value=-3.0, max_value=10.0, value=0.0, step=0.1)
 
-with tab2:
-    st.subheader("Cardiovascular Test Results")
-    col2_1, col2_2 = st.columns(2)
-    
-    with col2_1:
-        trestbps = st.slider("Resting Blood Pressure (mm Hg)", min_value=80, max_value=220, value=120)
-        if trestbps >= 140:
-            st.warning("⚠️ Hypertension Threshold: Blood pressure exceeds 140 mm Hg.")
-            
-        chol = st.slider("Serum Cholesterol (mg/dl)", min_value=0, max_value=600, value=200, 
-                         help="Some medical datasets record 0 for missing values.")
-        if chol > 240:
-            st.warning("⚠️ Hypercholesterolemia Threshold: Cholesterol exceeds 240 mg/dl.")
-            
-        fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dl", options=["False", "True"])
+st_slope = st.sidebar.selectbox("ST Slope Type", options=["Up", "Flat", "Down"])
+restecg = st.sidebar.selectbox("Resting ECG Results", options=["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"])
 
-    with col2_2:
-        thalach = st.slider("Maximum Heart Rate Achieved (MaxHR)", min_value=60, max_value=220, value=150)
-        oldpeak = st.slider("ST Depression Induced by Exercise (Oldpeak)", min_value=-3.0, max_value=10.0, value=0.0, step=0.1,
-                            help="ST depression relative to rest. Higher values indicate higher cardiovascular strain.")
-        
-        st_slope_options = ["Up", "Flat", "Down"]
-        st_slope = st.selectbox("ST Slope Type", options=st_slope_options)
-        
-        restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
-        restecg = st.selectbox("Resting ECG Results", options=restecg_options)
 
-# 5. Data Mapping (Always runs sequentially because elements are defined across tabs)
+# ==========================================
+# 4. DATA PROCESSING & INFERENCE (Runs cleanly before main UI rendering)
+# ==========================================
 gender_encoded = 1 if sex == "Female" else 0 
 fbs_encoded = 1 if fbs == "True" else 0
 exang_encoded = 1 if exang == "Yes" else 0
@@ -131,13 +115,22 @@ ordered_features = [
 input_data = pd.DataFrame([ordered_features], columns=columns)
 scaled = scaler.transform(input_data)
 
-# Run Inference
 prediction = model.predict(scaled)
 prediction_proba = model.predict_proba(scaled)[0][1]
 
-# Fill tab3 with advanced interactive outputs
-with tab3:
-    st.subheader("📊 Dynamic Diagnostic Risk Assessment")
+
+# ==========================================
+# 5. MAIN PAGE DISPLAY
+# ==========================================
+st.title("🫀 CardioRisk: Intelligent Diagnostic Assistant")
+st.write("The diagnostic engine dynamically processes patient cardiovascular profiles instantly based on sidebar parameters.")
+st.markdown("---")
+
+# Tab navigation handles outputs only now
+tab1, tab2, tab3 = st.tabs(["📊 Diagnostic Risk Assessment", "📋 Clinical Summary", "🛠️ Technical Feature Matrix"])
+
+with tab1:
+    st.subheader("Dynamic Risk Analytics")
     
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
@@ -169,7 +162,6 @@ with tab3:
     st.plotly_chart(fig, use_container_width=True)
 
     metric_col1, metric_col2 = st.columns(2)
-    
     with metric_col1:
         if prediction[0] == 1:
             st.metric(label="Calculated Classification", value="HIGH RISK", delta="Action Advised", delta_color="inverse")
@@ -183,9 +175,8 @@ with tab3:
         else:
             st.write(f"The baseline attributes showcase healthy tracking thresholds. Risk margin stays securely low at `{prediction_proba:.1%}`.")
 
-    st.markdown("---")
-    st.subheader("📋 Auto-Generated Clinical Summary")
-    
+with tab2:
+    st.subheader("Auto-Generated Clinical Summary")
     summary_text = f"""
     **Patient Medical Profile Summary**
     * **Age/Gender:** {age} Year Old {sex}
@@ -195,10 +186,11 @@ with tab3:
     """
     st.info(summary_text)
 
-# Keep standard footer items outside of tabs
-st.markdown("---")
-with st.expander("🛠️ View Raw Model Feature Matrix"):
+with tab3:
+    st.subheader("Raw Model Feature Matrix")
     st.write("This is the exact synchronized 1x18 matrix passed to the Logistic Regression model:")
     st.dataframe(input_data)
 
-st.info("**Disclaimer:** This application serves purely as an educational/portfolio demonstration of a machine learning classifier. It does not replace clinical consultation.")
+# Global App Footer
+st.markdown("---")
+st.caption("**Disclaimer:** This application serves purely as an educational/portfolio demonstration of a machine learning classifier. It does not replace clinical consultation.")
