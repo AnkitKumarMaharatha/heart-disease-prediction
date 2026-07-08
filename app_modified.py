@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 import numpy as np
-import plotly.graph_objects as go  # Added for interactive gauge chart
+import plotly.graph_objects as go 
 
 # 1. Page & Styling Configuration
 st.set_page_config(
@@ -11,7 +11,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# Custom Cyberpunk/Dark Mode CSS
+# FIXED CYBERPUNK CSS: Safely styles labels without breaking Streamlit's native Tab engine
 st.markdown(
     """
     <style>
@@ -23,12 +23,15 @@ st.markdown(
         background-color: #0D0D11;
         border-right: 1px solid #FF0055;
     }
-    label {
+    
+    /* Target widget labels specifically so we don't break the hidden tab headers */
+    .stSlider label, .stSelectbox label, .stRadio label {
         color: #FF0055 !important;
         text-transform: uppercase;
         letter-spacing: 1px;
         font-weight: bold;
     }
+    
     /* Clean metric styling */
     div[data-testid="stMetricValue"] {
         font-size: 2rem !important;
@@ -41,7 +44,6 @@ st.markdown(
 # 2. Load artifacts safely
 @st.cache_resource
 def load_assets():
-    # Fallback simulation if files aren't found locally for testing
     try:
         model = joblib.load("Log_Heart.pkl")
         columns = joblib.load("columns_heart.pkl")
@@ -58,12 +60,10 @@ st.title("🫀 CardioRisk: Intelligent Diagnostic Assistant")
 st.write("Modify patient demographics and vital clinical metrics below. The diagnostic engine dynamically visualizes patient cardiovascular profiles instantly.")
 st.markdown("---")
 
-# 4. Grouping Inputs into Interactive Tabs
-# Sidebar Navigation Control
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to:", ["👤 Patient Profile", "📊 Vitals & Labs", "📈 Interactive Analysis"])
+# 4. Grouping Inputs into Interactive Tabs (Now safely contained)
+tab1, tab2, tab3 = st.tabs(["👤 Patient Profile", "📊 Vitals & Labs", "📈 Interactive Analysis"])
 
-if page == "👤 Patient Profile":
+with tab1:
     st.subheader("Demographics & Symptoms")
     col1_1, col1_2 = st.columns(2)
     
@@ -73,16 +73,17 @@ if page == "👤 Patient Profile":
     
     with col1_2:
         cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-        chest_pain = st.selectbox("Chest Pain Type", options=cp_options, help="Type of chest pain.")
-        exang = st.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True)
+        chest_pain = st.selectbox("Chest Pain Type", options=cp_options, 
+                                help="Type of chest pain experienced by the patient.")
+        exang = st.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True,
+                           help="Does exercise trigger chest pain/angina symptoms?")
 
-elif page == "📊 Vitals & Labs":
+with tab2:
     st.subheader("Cardiovascular Test Results")
     col2_1, col2_2 = st.columns(2)
-
+    
     with col2_1:
         trestbps = st.slider("Resting Blood Pressure (mm Hg)", min_value=80, max_value=220, value=120)
-        # Interactive warning trigger
         if trestbps >= 140:
             st.warning("⚠️ Hypertension Threshold: Blood pressure exceeds 140 mm Hg.")
             
@@ -104,7 +105,7 @@ elif page == "📊 Vitals & Labs":
         restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
         restecg = st.selectbox("Resting ECG Results", options=restecg_options)
 
-# 5. Data Mapping
+# 5. Data Mapping (Always runs sequentially because elements are defined across tabs)
 gender_encoded = 1 if sex == "Female" else 0 
 fbs_encoded = 1 if fbs == "True" else 0
 exang_encoded = 1 if exang == "Yes" else 0
@@ -135,11 +136,9 @@ prediction = model.predict(scaled)
 prediction_proba = model.predict_proba(scaled)[0][1]
 
 # Fill tab3 with advanced interactive outputs
-
-if page == "📈 Interactive Analysis":
+with tab3:
     st.subheader("📊 Dynamic Diagnostic Risk Assessment")
     
-    # 1. Create Plotly Gauge Chart for dynamic visualization
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = prediction_proba * 100,
@@ -167,9 +166,8 @@ if page == "📈 Interactive Analysis":
         margin=dict(l=20, r=20, t=40, b=20)
     )
     
-    st.plotly_chart(fig, width='stretch')
+    st.plotly_chart(fig, use_container_width=True)
 
-    # 2. Status Output Layout
     metric_col1, metric_col2 = st.columns(2)
     
     with metric_col1:
@@ -179,23 +177,21 @@ if page == "📈 Interactive Analysis":
             st.metric(label="Calculated Classification", value="LOW RISK", delta="Normal Profile", delta_color="normal")
 
     with metric_col2:
-        # Dynamic advice rendering based on clinical numbers
         st.markdown("**Core Findings Summary:**")
         if prediction[0] == 1:
             st.write(f"Patient falls into a statistically higher vulnerability category. The model flags a `{prediction_proba:.1%}` match with legacy ischemic profiles.")
         else:
             st.write(f"The baseline attributes showcase healthy tracking thresholds. Risk margin stays securely low at `{prediction_proba:.1%}`.")
 
-    # 3. Dynamic Patient Summary Report Generator
     st.markdown("---")
     st.subheader("📋 Auto-Generated Clinical Summary")
     
     summary_text = f"""
     **Patient Medical Profile Summary**
-    *   **Age/Gender:** {age} Year Old {sex}
-    *   **Symptom Type:** Presenting with {chest_pain} chest discomfort.
-    *   **Vitals Tracking:** Blood pressure registered at {trestbps} mm Hg with a serum lipid panel holding at {chol} mg/dl.
-    *   **Diagnostic Vector Result:** Model evaluates standard classification status at **{"HIGH RISK" if prediction[0]==1 else "LOW RISK"}**.
+    * **Age/Gender:** {age} Year Old {sex}
+    * **Symptom Type:** Presenting with {chest_pain} chest discomfort.
+    * **Vitals Tracking:** Blood pressure registered at {trestbps} mm Hg with a serum lipid panel holding at {chol} mg/dl.
+    * **Diagnostic Vector Result:** Model evaluates standard classification status at **{"HIGH RISK" if prediction[0]==1 else "LOW RISK"}**.
     """
     st.info(summary_text)
 
