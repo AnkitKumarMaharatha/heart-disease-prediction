@@ -59,9 +59,11 @@ st.write("Modify patient demographics and vital clinical metrics below. The diag
 st.markdown("---")
 
 # 4. Grouping Inputs into Interactive Tabs
-tab1, tab2, tab3 = st.tabs(["👤 Patient Profile", "📊 Vitals & Labs", "📈 Interactive Analysis"])
+# Sidebar Navigation Control
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to:", ["👤 Patient Profile", "📊 Vitals & Labs", "📈 Interactive Analysis"])
 
-with tab1:
+if page == "👤 Patient Profile":
     st.subheader("Demographics & Symptoms")
     col1_1, col1_2 = st.columns(2)
     
@@ -71,15 +73,13 @@ with tab1:
     
     with col1_2:
         cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-        chest_pain = st.selectbox("Chest Pain Type", options=cp_options, 
-                                help="Type of chest pain experienced by the patient.")
-        exang = st.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True,
-                           help="Does exercise trigger chest pain/angina symptoms?")
+        chest_pain = st.selectbox("Chest Pain Type", options=cp_options, help="Type of chest pain.")
+        exang = st.radio("Exercise Induced Angina", options=["No", "Yes"], horizontal=True)
 
-with tab2:
+elif page == "📊 Vitals & Labs":
     st.subheader("Cardiovascular Test Results")
     col2_1, col2_2 = st.columns(2)
-    
+
     with col2_1:
         trestbps = st.slider("Resting Blood Pressure (mm Hg)", min_value=80, max_value=220, value=120)
         # Interactive warning trigger
@@ -135,7 +135,8 @@ prediction = model.predict(scaled)
 prediction_proba = model.predict_proba(scaled)[0][1]
 
 # Fill tab3 with advanced interactive outputs
-with tab3:
+
+if page == "📈 Interactive Analysis":
     st.subheader("📊 Dynamic Diagnostic Risk Assessment")
     
     # 1. Create Plotly Gauge Chart for dynamic visualization
