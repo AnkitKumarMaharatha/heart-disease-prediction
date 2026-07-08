@@ -74,6 +74,63 @@ def risk_theme(proba):
         return "High Risk", "#ff2079", "rgba(255, 32, 121, 0.6)"
 
 
+def build_summary(proba, label, age, sex, trestbps, chol, fbs, thalach,
+                   exang, oldpeak, chest_pain, st_slope):
+    """
+    Plain-language recap of the prediction: overall risk level plus the
+    specific inputs that are pulling the score up or that are reassuring.
+    This is a simple rule-of-thumb explainer, not a model interpretation
+    (e.g. SHAP) — it just flags values outside typical healthy ranges.
+    """
+    risk_pct = proba * 100
+    flags, reassurances = [], []
+
+    if trestbps >= 140:
+        flags.append(f"elevated resting blood pressure ({trestbps} mm Hg)")
+    elif trestbps < 120:
+        reassurances.append("normal resting blood pressure")
+
+    if chol >= 240:
+        flags.append(f"high cholesterol ({chol} mg/dl)")
+    elif 0 < chol < 200:
+        reassurances.append("healthy cholesterol level")
+
+    if fbs == "True":
+        flags.append("elevated fasting blood sugar")
+
+    if exang == "Yes":
+        flags.append("exercise-induced angina")
+
+    if oldpeak >= 2.0:
+        flags.append(f"a notable ST depression on exertion ({oldpeak})")
+
+    if chest_pain == "Asymptomatic":
+        flags.append("an asymptomatic chest pain pattern, which is often linked to higher risk")
+
+    if st_slope == "Flat" or st_slope == "Down":
+        flags.append(f"a {st_slope.lower()} ST slope")
+    elif st_slope == "Up":
+        reassurances.append("an upsloping ST segment, a favorable sign")
+
+    if thalach < (220 - age) * 0.7:
+        flags.append("a lower-than-expected maximum heart rate for this age")
+
+    sentences = [
+        f"Based on the values entered, the model estimates a **{risk_pct:.1f}%** "
+        f"probability of heart disease, placing this case in the **{label}** category."
+    ]
+
+    if flags:
+        sentences.append("Factors pushing the score up include " + "; ".join(flags) + ".")
+    if reassurances:
+        sentences.append("On the positive side, " + "; ".join(reassurances) + ".")
+    if not flags and not reassurances:
+        sentences.append("No individual metric stands out as strongly favorable or concerning on its own; "
+                          "the score reflects the combined pattern across all inputs.")
+
+    return " ".join(sentences)
+
+
 # ------------------------------------------------------------------
 # 3. Sidebar inputs (kept live so every change triggers a rerun ->
 #    real-time prediction with no button needed)
@@ -143,9 +200,15 @@ st.markdown(f"""
     background-attachment: fixed;
     transition: background 0.8s ease;
 }}
-.stApp, .stApp p, .stApp label, .stApp span, .stMarkdown {{
+.stApp, .stApp p, .stApp label, .stApp span:not([data-testid="stIconMaterial"]), .stMarkdown {{
     color: #e6e9f2;
     font-family: 'Inter', sans-serif;
+}}
+/* Keep Streamlit's built-in icon font intact (sidebar collapse arrow, etc.) —
+   without this override those icons render as raw text like "keyboard_double_arrow" */
+[data-testid="stIconMaterial"] {{
+    font-family: 'Material Symbols Rounded', 'Material Icons' !important;
+    color: #e6e9f2 !important;
 }}
 h1, h2, h3 {{
     font-family: 'Inter', sans-serif !important;
@@ -344,6 +407,12 @@ if proba is not None:
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.progress(min(max(proba, 0.0), 1.0))
+
+    st.markdown("#### 📝 Summary")
+    summary_text = build_summary(proba, label, age, sex, trestbps, chol, fbs,
+                                  thalach, exang, oldpeak, chest_pain, st_slope)
+    st.markdown(f'<div class="metric-card" style="text-align:left;">{summary_text}</div>',
+                unsafe_allow_html=True)
 else:
     st.info("👈 Adjust the sidebar inputs, or click **Run Diagnostic Prediction** to see results.")
 
