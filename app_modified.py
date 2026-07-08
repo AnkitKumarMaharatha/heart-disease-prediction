@@ -137,6 +137,16 @@ st.markdown(f"""
 [data-testid="stSidebar"] * {{
     color: #f1f1f1 !important;
 }}
+/* Widgets that render on a white/light background need dark text,
+   otherwise the blanket rule above makes them white-on-white */
+[data-testid="stSidebar"] [data-baseweb="select"] * ,
+[data-testid="stSidebar"] input,
+[data-testid="stSidebar"] [data-baseweb="input"] * {{
+    color: #1a1c2c !important;
+}}
+[data-testid="stSidebar"] [data-baseweb="select"] svg {{
+    fill: #1a1c2c !important;
+}}
 div.stButton > button {{
     background-color: {accent};
     color: white;
