@@ -63,15 +63,15 @@ def encode_inputs(age, sex, chest_pain, trestbps, chol, fbs, restecg,
 
 
 def risk_theme(proba):
-    """Return (label, color, gradient) based on risk probability."""
+    """Return (label, neon_color, glow_color) based on risk probability."""
     if proba is None:
-        return "Awaiting input", "#6c757d", ("#f5f7fa", "#e9ecef")
+        return "Awaiting input", "#00e5ff", "rgba(0, 229, 255, 0.55)"
     if proba < 0.35:
-        return "Low Risk", "#1f9d55", ("#e6fbf0", "#c8f7dc")
+        return "Low Risk", "#39ff14", "rgba(57, 255, 20, 0.55)"
     elif proba < 0.65:
-        return "Moderate Risk", "#e0a300", ("#fff8e1", "#ffecb3")
+        return "Moderate Risk", "#ffea00", "rgba(255, 234, 0, 0.55)"
     else:
-        return "High Risk", "#d64545", ("#fdecec", "#ffd6d6")
+        return "High Risk", "#ff2079", "rgba(255, 32, 121, 0.6)"
 
 
 # ------------------------------------------------------------------
@@ -120,62 +120,168 @@ if live_mode:
     prediction = model.predict(scaled_features)
     proba = model.predict_proba(scaled_features)[0][1]
 
-label, accent, (bg_top, bg_bottom) = risk_theme(proba)
+label, accent, glow = risk_theme(proba)
 
 # ------------------------------------------------------------------
 # 5. Dynamic background styling — reacts to current risk level
 # ------------------------------------------------------------------
 st.markdown(f"""
 <style>
-.stApp {{
-    background: linear-gradient(180deg, {bg_top} 0%, {bg_bottom} 100%);
-    transition: background 0.6s ease;
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600&display=swap');
+
+@keyframes pulse-glow {{
+    0%   {{ box-shadow: 0 0 6px {glow}, 0 0 14px {glow}; }}
+    50%  {{ box-shadow: 0 0 16px {glow}, 0 0 34px {glow}; }}
+    100% {{ box-shadow: 0 0 6px {glow}, 0 0 14px {glow}; }}
 }}
+@keyframes flicker {{
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {{ opacity: 1; }}
+    20%, 22%, 24%, 55% {{ opacity: 0.7; }}
+}}
+
+/* --- App-wide dark neon backdrop --- */
+.stApp {{
+    background:
+        radial-gradient(circle at 15% 10%, rgba(0,229,255,0.10), transparent 40%),
+        radial-gradient(circle at 85% 90%, {glow} 0%, transparent 45%),
+        linear-gradient(160deg, #05060f 0%, #0b0e1f 45%, #05060f 100%);
+    background-attachment: fixed;
+    transition: background 0.8s ease;
+}}
+.stApp, .stApp p, .stApp label, .stApp span, .stMarkdown {{
+    color: #e8f6ff;
+    font-family: 'Rajdhani', sans-serif;
+}}
+
+h1, h2, h3 {{
+    font-family: 'Orbitron', sans-serif !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 8px {accent}, 0 0 22px {glow};
+    animation: flicker 6s infinite;
+}}
+
+/* --- Sidebar: dark glass panel with neon border --- */
 [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #2b2d42 0%, #1a1c2c 100%);
+    background: linear-gradient(180deg, #0a0c1a 0%, #05060f 100%);
+    border-right: 1px solid {accent};
+    box-shadow: inset -1px 0 12px {glow};
 }}
 [data-testid="stSidebar"] * {{
-    color: #f1f1f1 !important;
+    color: #e8f6ff !important;
+    font-family: 'Rajdhani', sans-serif;
 }}
-/* Widgets that render on a white/light background need dark text,
-   otherwise the blanket rule above makes them white-on-white */
-[data-testid="stSidebar"] [data-baseweb="select"] * ,
+[data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {{
+    font-family: 'Orbitron', sans-serif !important;
+    color: {accent} !important;
+    text-shadow: 0 0 6px {glow};
+}}
+
+/* Selectboxes / text inputs: dark glass with neon outline, text light */
+[data-testid="stSidebar"] [data-baseweb="select"] > div,
+[data-testid="stSidebar"] [data-baseweb="input"] > div {{
+    background-color: #0d1024 !important;
+    border: 1.5px solid {accent} !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 8px {glow};
+}}
+[data-testid="stSidebar"] [data-baseweb="select"] *,
 [data-testid="stSidebar"] input,
 [data-testid="stSidebar"] [data-baseweb="input"] * {{
-    color: #1a1c2c !important;
+    color: #e8f6ff !important;
 }}
 [data-testid="stSidebar"] [data-baseweb="select"] svg {{
-    fill: #1a1c2c !important;
+    fill: {accent} !important;
 }}
+
+/* Sliders: neon track + glowing thumb */
+[data-testid="stSidebar"] [data-baseweb="slider"] div[role="slider"] {{
+    background-color: {accent} !important;
+    box-shadow: 0 0 10px {glow}, 0 0 20px {glow};
+    border: 2px solid white;
+}}
+[data-testid="stSidebar"] .stSlider [data-testid="stTickBar"] {{
+    display: none;
+}}
+
+/* Radio buttons */
+[data-testid="stSidebar"] [role="radiogroup"] label span:first-child {{
+    box-shadow: 0 0 6px {glow};
+}}
+
+/* Toggle switch */
+[data-testid="stSidebar"] [data-testid="stCheckbox"] {{
+    filter: drop-shadow(0 0 6px {glow});
+}}
+
+/* --- Buttons --- */
 div.stButton > button {{
-    background-color: {accent};
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 0.6em 1.2em;
-    font-weight: 600;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    background: linear-gradient(135deg, {accent} 0%, #0d1024 140%);
+    color: #05060f;
+    border: 1.5px solid {accent};
+    border-radius: 10px;
+    padding: 0.65em 1.4em;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    animation: pulse-glow 2.4s infinite;
 }}
 div.stButton > button:hover {{
-    transform: translateY(-2px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 0 20px {glow}, 0 0 40px {glow};
 }}
+
+/* --- Risk badge --- */
 .risk-badge {{
     display: inline-block;
-    padding: 0.35em 1em;
+    padding: 0.4em 1.2em;
     border-radius: 999px;
-    background-color: {accent};
-    color: white;
+    background: #0d1024;
+    border: 1.5px solid {accent};
+    color: {accent} !important;
+    font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     font-size: 0.9em;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    box-shadow: 0 0 10px {glow}, 0 0 22px {glow};
+    animation: pulse-glow 2.4s infinite;
 }}
+
+/* --- Metric / result cards --- */
 .metric-card {{
-    background: white;
-    border-radius: 12px;
-    padding: 1em;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    background: linear-gradient(160deg, #0d1024 0%, #090b17 100%);
+    border: 1px solid {accent};
+    border-radius: 14px;
+    padding: 1.2em;
     text-align: center;
+    box-shadow: 0 0 16px {glow};
+}}
+[data-testid="stMetric"] {{
+    background: #0d1024;
+    border: 1px solid {accent};
+    border-radius: 10px;
+    padding: 0.6em;
+    box-shadow: 0 0 10px {glow};
+}}
+[data-testid="stMetricValue"] {{
+    color: {accent} !important;
+    text-shadow: 0 0 10px {glow};
+}}
+
+/* Progress bar glow */
+[data-testid="stProgress"] > div > div {{
+    background: linear-gradient(90deg, #00e5ff, {accent}) !important;
+    box-shadow: 0 0 10px {glow};
+}}
+
+/* Success / error / info boxes */
+[data-testid="stAlert"] {{
+    background-color: #0d1024 !important;
+    border: 1px solid {accent} !important;
+    box-shadow: 0 0 12px {glow};
+    border-radius: 10px;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -198,7 +304,7 @@ if not live_mode:
         scaled_features = scaler.transform(input_data)
         prediction = model.predict(scaled_features)
         proba = model.predict_proba(scaled_features)[0][1]
-        label, accent, _ = risk_theme(proba)
+        label, accent, glow = risk_theme(proba)
 
 # ------------------------------------------------------------------
 # 8. Results: gauge meter + summary cards
@@ -212,25 +318,36 @@ if proba is not None:
         fig = go.Figure(go.Indicator(
             mode="gauge+number",
             value=risk_pct,
-            number={'suffix': "%", 'font': {'size': 40}},
-            title={'text': "Predicted Risk Score", 'font': {'size': 18}},
+            number={'suffix': "%", 'font': {'size': 42, 'color': accent, 'family': "Orbitron"}},
+            title={'text': "PREDICTED RISK SCORE",
+                   'font': {'size': 16, 'color': '#e8f6ff', 'family': "Orbitron"}},
             gauge={
-                'axis': {'range': [0, 100], 'tickwidth': 1},
-                'bar': {'color': accent, 'thickness': 0.3},
+                'shape': "angular",
+                'axis': {'range': [0, 100], 'tickwidth': 1,
+                         'tickcolor': '#e8f6ff', 'tickfont': {'color': '#e8f6ff'}},
+                'bar': {'color': accent, 'thickness': 0.28},
+                'bgcolor': "#05060f",
+                'borderwidth': 1,
+                'bordercolor': accent,
                 'steps': [
-                    {'range': [0, 35], 'color': '#c8f7dc'},
-                    {'range': [35, 65], 'color': '#ffecb3'},
-                    {'range': [65, 100], 'color': '#ffd6d6'},
+                    {'range': [0, 35], 'color': 'rgba(57, 255, 20, 0.25)'},
+                    {'range': [35, 65], 'color': 'rgba(255, 234, 0, 0.25)'},
+                    {'range': [65, 100], 'color': 'rgba(255, 32, 121, 0.25)'},
                 ],
                 'threshold': {
-                    'line': {'color': accent, 'width': 4},
-                    'thickness': 0.85,
+                    'line': {'color': accent, 'width': 5},
+                    'thickness': 0.9,
                     'value': risk_pct
                 }
             }
         ))
-        fig.update_layout(height=300, margin=dict(l=20, r=20, t=50, b=10),
-                           paper_bgcolor="rgba(0,0,0,0)")
+        fig.update_layout(
+            height=300,
+            margin=dict(l=20, r=20, t=60, b=10),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font={'color': '#e8f6ff'}
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     with col_summary:
