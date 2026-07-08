@@ -13,37 +13,28 @@ st.set_page_config(
     layout="wide"
 )
 
-# FORCE-INJECT CSS: This overrides Streamlit's internal block containers directly
+# Custom CSS targeting basic HTML wrappers we control completely
 st.markdown("""
     <style>
-    /* 1. Target the FIRST input container block (Demographics) */
-    div[data-testid="stVerticalBlock"] > div:nth-child(2) > div[data-testid="stVerticalBlockBorder"] {
-        background-color: #EBF8FF !important; /* Soft Blue */
-        border: 2px solid #3182CE !important;
-        border-radius: 16px !important;
-        padding: 30px !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+    .blue-bg {
+        background-color: #EBF8FF !important;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px solid #3182CE;
+        margin-bottom: 25px;
     }
-    
-    /* 2. Target the SECOND input container block (Labs) */
-    div[data-testid="stVerticalBlock"] > div:nth-child(3) > div[data-testid="stVerticalBlockBorder"] {
-        background-color: #F7FAFC !important; /* Cool Grey */
-        border: 2px solid #CBD5E0 !important;
-        border-radius: 16px !important;
-        padding: 30px !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05) !important;
+    .grey-bg {
+        background-color: #F7FAFC !important;
+        padding: 20px;
+        border-radius: 12px;
+        border: 2px solid #CBD5E0;
+        margin-bottom: 25px;
     }
-
-    /* Dark Mode specific overrides so text stays crisp and readable */
+    /* Ensure text inside wrappers plays nice with dark mode */
     @media (prefers-color-scheme: dark) {
-        div[data-testid="stVerticalBlock"] > div:nth-child(2) > div[data-testid="stVerticalBlockBorder"] {
-            background-color: #1A365D !important; /* Dark Navy Blue */
-            border-color: #2B6CB0 !important;
-        }
-        div[data-testid="stVerticalBlock"] > div:nth-child(3) > div[data-testid="stVerticalBlockBorder"] {
-            background-color: #2D3748 !important; /* Dark Slate Grey */
-            border-color: #4A5568 !important;
-        }
+        .blue-bg { background-color: #1A365D !important; border-color: #2B6CB0; }
+        .grey-bg { background-color: #2D3748 !important; border-color: #4A5568; }
+        .blue-bg *, .grey-bg * { color: white !important; }
     }
     </style>
 """, unsafe_allow_html=True)
@@ -55,37 +46,39 @@ st.markdown("---")
 tab1, tab2 = st.tabs(["📋 [Step 1] Patient Metric Input", "🎯 [Step 2] Real-Time Prediction Analytics"])
 
 with tab1:
-    # First Styled Block: Demographics
-    with st.container(border=True):
-        st.markdown("### 🧑‍⚕️ Patient Demographics & Symptom Profile")
-        col1, col2 = st.columns(2, gap="large")
-        with col1:
-            age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45)
-            sex = st.selectbox("Gender Identification", options=["Male", "Female"])
-            cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
-            chest_pain = st.selectbox("Chest Pain Categorization", options=cp_options)
-            exang = st.selectbox("Exercise Induced Angina Symptoms", options=["No", "Yes"])
-        with col2:
-            trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120)
-            chol = st.number_input("Serum Cholesterol Level (mg/dl)", min_value=0, max_value=650, value=200)
-            thalach = st.number_input("Maximum Achieved Heart Rate (bpm)", min_value=60, max_value=220, value=150)
+    # --- BLOCK 1: DEMOGRAPHICS ---
+    st.markdown('<div class="blue-bg">', unsafe_allow_html=True)
+    st.markdown("### 🧑‍⚕️ Patient Demographics & Symptom Profile")
+    col1, col2 = st.columns(2, gap="large")
+    with col1:
+        age = st.number_input("Age (Years)", min_value=1, max_value=110, value=45, key="age_in")
+        sex = st.selectbox("Gender Identification", options=["Male", "Female"], key="sex_in")
+        cp_options = ["Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"]
+        chest_pain = st.selectbox("Chest Pain Categorization", options=cp_options, key="cp_in")
+        exang = st.selectbox("Exercise Induced Angina Symptoms", options=["No", "Yes"], key="ex_in")
+    with col2:
+        trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=50, max_value=250, value=120, key="bp_in")
+        chol = st.number_input("Serum Cholesterol Level (mg/dl)", min_value=0, max_value=650, value=200, key="chol_in")
+        thalach = st.number_input("Maximum Achieved Heart Rate (bpm)", min_value=60, max_value=220, value=150, key="hr_in")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Second Styled Block: Electrocardiogram
-    with st.container(border=True):
-        st.markdown("### 🔬 Advanced Electrocardiogram & Lab Metrics")
-        col3, col4 = st.columns(2, gap="large")
-        with col3:
-            fbs = st.selectbox("Fasting Blood Sugar Profile > 120 mg/dl", options=["False", "True"])
-            restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
-            restecg = st.selectbox("Resting ECG Waveform Analysis", options=restecg_options)
-        with col4:
-            oldpeak = st.number_input("ST Depression Induced via Physical Stress", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
-            st_slope_options = ["Up", "Flat", "Down"]
-            st_slope = st.selectbox("Peak Exercise ST Segment Slope", options=st_slope_options)
+    # --- BLOCK 2: LAB METRICS ---
+    st.markdown('<div class="grey-bg">', unsafe_allow_html=True)
+    st.markdown("### 🔬 Advanced Electrocardiogram & Lab Metrics")
+    col3, col4 = st.columns(2, gap="large")
+    with col3:
+        fbs = st.selectbox("Fasting Blood Sugar Profile > 120 mg/dl", options=["False", "True"], key="fbs_in")
+        restecg_options = ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"]
+        restecg = st.selectbox("Resting ECG Waveform Analysis", options=restecg_options, key="ecg_in")
+    with col4:
+        oldpeak = st.number_input("ST Depression Induced via Physical Stress", min_value=0.0, max_value=10.0, value=0.0, step=0.1, key="old_in")
+        st_slope_options = ["Up", "Flat", "Down"]
+        st_slope = st.selectbox("Peak Exercise ST Segment Slope", options=st_slope_options, key="slope_in")
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.info("💡 **Data Live Synced:** Head over to the **Real-Time Prediction Analytics** tab to view results instantly.")
 
-# Behind-the-scenes data engineering pipeline
+# --- DATA PROCESSING PIPELINE ---
 gender_encoded = 1 if sex == "Male" else 0
 fbs_encoded = 1 if fbs == "True" else 0
 exang_encoded = 1 if exang == "Yes" else 0
@@ -113,7 +106,7 @@ data_dict = {
 
 input_data = pd.DataFrame([data_dict])[columns]
 
-# Machine Learning Calculations
+# Model Calculations
 scaled_features = scaler.transform(input_data)
 prediction = model.predict(scaled_features)
 prediction_proba = float(model.predict_proba(scaled_features)[0][1])
@@ -121,7 +114,7 @@ prediction_proba = float(model.predict_proba(scaled_features)[0][1])
 with tab2:
     st.subheader("🎯 Live Clinical Diagnostic Report")
     
-    # Real-Time colored status blocks using native Streamlit notification alerts (which are completely filled)
+    # We use Streamlit's built-in alert boxes for prediction because they ALWAYS have bright background fills out-of-the-box
     if prediction[0] == 1:
         st.error(f"## ⚠️ Alert: High Probability of Anomalies Detected ({prediction_proba:.2%})")
         c1, c2 = st.columns([1, 2])
@@ -144,4 +137,4 @@ with tab2:
         st.dataframe(input_data, use_container_width=True)
 
 st.markdown("---")
-st.caption("**Disclaimer:** This software tool is engineered for informational, educational, and computational demonstration purposes.")
+st.caption("**Disclaimer:** This software tool is engineered for informational and educational purposes.")
